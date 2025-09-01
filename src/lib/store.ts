@@ -31,11 +31,14 @@ class VerificheStore {
   }
 
   // Tests management
-  createTest(title: string): Test {
+  createTest(title: string, subject: string = 'Generale', topic: string = 'Argomento generico', classLabel: string = '1A'): Test {
     const test: Test = {
       id: `test-${Date.now()}`,
       title: title || 'Nuova Verifica',
       description: '',
+      subject,
+      topic,
+      classLabel,
       status: 'DRAFT',
       ownerId: this.currentUser?.id || 'demo-docente',
       settings: {},
@@ -45,14 +48,14 @@ class VerificheStore {
 
     this.tests.set(test.id, test);
     
-    // Crea la prima domanda demo
+    // Crea la prima domanda demo coerente con la disciplina
     const demoQuestion: Question = {
       id: `q-${Date.now()}`,
       testId: test.id,
       questionIndex: 0,
       type: 'MCQ',
-      prompt: 'Qual è la capitale d\'Italia?',
-      options: ['Roma', 'Milano', 'Torino', 'Napoli'],
+      prompt: this.getDemoQuestionForSubject(subject, topic),
+      options: this.getDemoOptionsForSubject(subject),
       correctAnswer: { selected: 0 },
       points: 1
     };
@@ -287,10 +290,32 @@ class VerificheStore {
     }
   }
 
+  private getDemoQuestionForSubject(subject: string, topic: string): string {
+    const questions = {
+      'Storia': `Qual è la capitale dell'antica Roma relativa a ${topic}?`,
+      'Matematica': `Quanto fa 2 + 2?`,
+      'Italiano': `Chi ha scritto "I Promessi Sposi"?`,
+      'Scienze': `Qual è la formula dell'acqua?`,
+      'Geografia': `Qual è la capitale d'Italia?`,
+    };
+    return questions[subject as keyof typeof questions] || 'Qual è la capitale d\'Italia?';
+  }
+
+  private getDemoOptionsForSubject(subject: string): string[] {
+    const options = {
+      'Storia': ['Roma', 'Atene', 'Sparta', 'Cartagine'],
+      'Matematica': ['4', '3', '5', '2'],
+      'Italiano': ['Alessandro Manzoni', 'Dante Alighieri', 'Giovanni Verga', 'Italo Calvino'],
+      'Scienze': ['H2O', 'CO2', 'NaCl', 'H2SO4'],
+      'Geografia': ['Roma', 'Milano', 'Torino', 'Napoli'],
+    };
+    return options[subject as keyof typeof options] || ['Roma', 'Milano', 'Torino', 'Napoli'];
+  }
+
   private initDemoData() {
     if (this.tests.size === 0) {
       // Crea una verifica demo
-      const demoTest = this.createTest('Verifica di Storia Antica');
+      const demoTest = this.createTest('Verifica di Storia Antica', 'Storia', 'Antica Roma', '2A');
       this.updateTest(demoTest.id, {
         description: 'Verifica sui principali eventi dell\'antica Roma',
         status: 'PUBLISHED',

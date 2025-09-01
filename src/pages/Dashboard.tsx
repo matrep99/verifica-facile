@@ -1,33 +1,86 @@
 import { useState } from 'react';
-import { Plus, FileText, Users, BarChart3, Settings } from 'lucide-react';
+import { Plus, FileText, Users, BarChart3, Settings, Monitor, Eye } from 'lucide-react';
 import { Layout } from '@/components/Layout';
 import { VerificheButton } from '@/components/ui/button-variants';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { store } from '@/lib/store';
 import { useNavigate } from 'react-router-dom';
 import { Test } from '@/types';
+import { useToast } from '@/components/ui/use-toast';
 
 export const Dashboard = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isCreating, setIsCreating] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    subject: '',
+    topic: '',
+    classLabel: '',
+    description: ''
+  });
   const currentUser = store.getCurrentUser();
   const tests = currentUser ? store.getUserTests(currentUser.id) : [];
 
-  const handleCreateTest = async () => {
-    if (!currentUser) return;
+  const handleCreateTest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser || !formData.subject || !formData.topic || !formData.classLabel) {
+      toast({
+        title: "Campi obbligatori mancanti",
+        description: "Disciplina, Argomento e Classe sono obbligatori.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setIsCreating(true);
     try {
-      // Simula un piccolo delay per UX
+      // Simula chiamata API con possibile fallback locale
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      const newTest = store.createTest('Nuova Verifica');
+      const newTest = store.createTest(
+        formData.title || 'Nuova Verifica',
+        formData.subject,
+        formData.topic,
+        formData.classLabel
+      );
+      
+      if (formData.description) {
+        store.updateTest(newTest.id, { description: formData.description });
+      }
+      
+      toast({
+        title: "Verifica creata",
+        description: "La nuova verifica è stata creata con successo."
+      });
+      
       navigate(`/builder/${newTest.id}`);
     } catch (error) {
       console.error('Errore nella creazione del test:', error);
+      
+      // Fallback locale
+      const localId = `local-${Date.now()}`;
+      localStorage.setItem(`test-${localId}`, JSON.stringify({
+        ...formData,
+        id: localId,
+        createdAt: new Date().toISOString()
+      }));
+      
+      toast({
+        title: "Modalità offline",
+        description: "Verifica salvata localmente. Sarà sincronizzata quando torni online."
+      });
+      
+      navigate(`/builder/${localId}`);
     } finally {
       setIsCreating(false);
+      setShowCreateForm(false);
+      setFormData({ title: '', subject: '', topic: '', classLabel: '', description: '' });
     }
   };
 
@@ -115,18 +168,135 @@ export const Dashboard = () => {
         </div>
 
         {/* Quick Actions */}
-        <div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <VerificheButton
             variant="primary"
             size="lg"
-            onClick={handleCreateTest}
+            onClick={() => setShowCreateForm(true)}
             disabled={isCreating}
-            className="mb-6"
           >
             <Plus className="mr-2 h-5 w-5" />
-            {isCreating ? 'Creazione in corso...' : 'Crea Nuova Verifica'}
+            Crea Nuova Verifica
+          </VerificheButton>
+          
+          <VerificheButton
+            variant="outline"
+            size="lg"
+            onClick={() => navigate('/monitor')}
+          >
+            <Monitor className="mr-2 h-5 w-5" />
+            Monitoraggio & Correzione
+          </VerificheButton>
+          
+          <VerificheButton
+            variant="outline"
+            size="lg"
+            onClick={() => navigate('/results')}
+          >
+            <BarChart3 className="mr-2 h-5 w-5" />
+            Risultati Generali
           </VerificheButton>
         </div>
+
+        {/* Create Test Form */}
+        {showCreateForm && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Crea Nuova Verifica</CardTitle>
+              <CardDescription>
+                Compila i campi per creare una nuova verifica. Disciplina, Argomento e Classe sono obbligatori.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleCreateTest} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="subject">Disciplina *</Label>
+                    <Select 
+                      value={formData.subject} 
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, subject: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleziona disciplina" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Matematica">Matematica</SelectItem>
+                        <SelectItem value="Italiano">Italiano</SelectItem>
+                        <SelectItem value="Storia">Storia</SelectItem>
+                        <SelectItem value="Geografia">Geografia</SelectItem>
+                        <SelectItem value="Scienze">Scienze</SelectItem>
+                        <SelectItem value="Inglese">Inglese</SelectItem>
+                        <SelectItem value="Arte">Arte</SelectItem>
+                        <SelectItem value="Musica">Musica</SelectItem>
+                        <SelectItem value="Educazione Fisica">Educazione Fisica</SelectItem>
+                        <SelectItem value="Tecnologia">Tecnologia</SelectItem>
+                        <SelectItem value="Religione">Religione</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="topic">Argomento *</Label>
+                    <Input
+                      id="topic"
+                      placeholder="es. Equazioni di primo grado"
+                      value={formData.topic}
+                      onChange={(e) => setFormData(prev => ({ ...prev, topic: e.target.value }))}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="classLabel">Classe *</Label>
+                    <Input
+                      id="classLabel"
+                      placeholder="es. 2A o Seconda media"
+                      value={formData.classLabel}
+                      onChange={(e) => setFormData(prev => ({ ...prev, classLabel: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="title">Titolo</Label>
+                  <Input
+                    id="title"
+                    placeholder="Titolo della verifica (opzionale)"
+                    value={formData.title}
+                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="description">Descrizione</Label>
+                  <Input
+                    id="description"
+                    placeholder="Breve descrizione della verifica (opzionale)"
+                    value={formData.description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  />
+                </div>
+                
+                <div className="flex items-center space-x-4">
+                  <VerificheButton 
+                    type="submit" 
+                    variant="primary"
+                    disabled={isCreating || !formData.subject || !formData.topic || !formData.classLabel}
+                  >
+                    {isCreating ? 'Creazione in corso...' : 'Crea Verifica'}
+                  </VerificheButton>
+                  
+                  <VerificheButton 
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowCreateForm(false)}
+                  >
+                    Annulla
+                  </VerificheButton>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Tests List */}
         <div>
@@ -161,8 +331,19 @@ export const Dashboard = () => {
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <CardTitle className="text-base">{test.title}</CardTitle>
-                          <CardDescription className="mt-1">
-                            {test.description || 'Nessuna descrizione'}
+                          <CardDescription className="mt-1 space-y-1">
+                            <div className="flex items-center space-x-2 text-sm">
+                              <span className="font-medium text-primary">{test.subject}</span>
+                              <span>•</span>
+                              <span>{test.topic}</span>
+                              <span>•</span>
+                              <span className="font-medium">{test.classLabel}</span>
+                            </div>
+                            {test.description && (
+                              <div className="text-muted-foreground">
+                                {test.description}
+                              </div>
+                            )}
                           </CardDescription>
                         </div>
                         <div className="flex items-center space-x-3">

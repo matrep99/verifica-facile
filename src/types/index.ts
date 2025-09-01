@@ -16,6 +16,9 @@ export interface Test {
   id: string;
   title: string;
   description: string;
+  subject: string; // Disciplina
+  topic: string; // Argomento
+  classLabel: string; // Classe (es. "2A" o "Seconda media")
   status: TestStatus;
   ownerId: string;
   settings: {
