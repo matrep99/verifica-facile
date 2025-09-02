@@ -1,73 +1,80 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Design system per app verifiche docenti italiani */
+/* Design system VERIFICAI - Tech Startup Style */
 
 @layer base {
   :root {
-    /* Colori base - tema educativo pulito */
-    --background: 210 20% 98%;
-    --foreground: 222 47% 11%;
+    /* Base - pulito bianco startup */
+    --background: 0 0% 100%;
+    --foreground: 225 15% 20%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 225 15% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 225 15% 20%;
 
-    /* Brand principale - blu educativo */
-    --primary: 217 91% 60%;
+    /* Brand principale - gradiente blu tech */
+    --primary: 240 100% 67%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 217 91% 55%;
+    --primary-hover: 240 100% 62%;
 
-    /* Accenti verdi per successo */
-    --success: 142 76% 36%;
+    /* Viola accent per gradiente */
+    --accent-purple: 280 100% 70%;
+    --accent-purple-hover: 280 100% 65%;
+
+    /* Success - verde tech */
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
-    --success-hover: 142 76% 31%;
+    --success-hover: 142 71% 40%;
 
-    /* Secondario - grigio chiaro */
-    --secondary: 210 16% 93%;
-    --secondary-foreground: 222 47% 11%;
-    --secondary-hover: 210 16% 88%;
+    /* Secondario - grigio minimal */
+    --secondary: 210 20% 98%;
+    --secondary-foreground: 225 15% 20%;
+    --secondary-hover: 210 20% 94%;
 
     /* Muted per testi secondari */
-    --muted: 210 16% 93%;
-    --muted-foreground: 215 25% 27%;
+    --muted: 210 20% 98%;
+    --muted-foreground: 215 16% 47%;
 
     /* Accent per highlights */
-    --accent: 210 16% 93%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 210 20% 98%;
+    --accent-foreground: 225 15% 20%;
 
     /* Warning per bozze */
-    --warning: 43 96% 56%;
-    --warning-foreground: 26 83% 14%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
 
     /* Destructive per eliminazioni */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Bordi e input */
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 217 91% 60%;
+    /* Bordi sottili tech */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 240 100% 67%;
 
-    /* Radius arrotondati */
-    --radius: 0.75rem;
+    /* Radius moderni arrotondati */
+    --radius: 1rem;
 
-    /* Gradienti per hero sections */
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(142 76% 36%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(210 20% 98%));
+    /* Gradienti tech startup */
+    --gradient-primary: linear-gradient(135deg, hsl(240 100% 67%) 0%, hsl(280 100% 70%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(210 20% 98%) 0%, hsl(0 0% 100%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(210 20% 99%) 100%);
 
-    /* Ombre */
-    --shadow-card: 0 4px 6px -1px hsl(217 91% 60% / 0.1);
-    --shadow-hover: 0 10px 15px -3px hsl(217 91% 60% / 0.1);
-    --shadow-focus: 0 0 0 3px hsl(217 91% 60% / 0.12);
+    /* Ombre moderne */
+    --shadow-card: 0 4px 6px -1px hsl(240 100% 67% / 0.08), 0 2px 4px -1px hsl(240 100% 67% / 0.06);
+    --shadow-hover: 0 20px 25px -5px hsl(240 100% 67% / 0.1), 0 10px 10px -5px hsl(240 100% 67% / 0.04);
+    --shadow-focus: 0 0 0 3px hsl(240 100% 67% / 0.12);
+    --shadow-glow: 0 0 40px hsl(240 100% 67% / 0.15);
 
-    /* Transizioni */
-    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Transizioni smooth */
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
@@ -99,7 +106,7 @@
   }
 
   body {
-    @apply bg-background text-foreground font-inter antialiased;
+    @apply bg-background text-foreground font-manrope antialiased;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -113,15 +120,27 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-primary text-primary-foreground hover:bg-primary-hover;
+    @apply bg-gradient-to-r from-primary to-accent-purple text-white font-semibold rounded-2xl px-6 py-3 shadow-lg hover:shadow-glow hover:scale-105 transform transition-all duration-300;
   }
   
-  .btn-success {
-    @apply bg-success text-success-foreground hover:bg-success-hover;
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground font-semibold rounded-2xl px-6 py-3 border border-border hover:bg-secondary-hover hover:shadow-md transform hover:scale-105 transition-all duration-300;
+  }
+  
+  .card-startup {
+    @apply bg-card rounded-2xl p-6 shadow-card hover:shadow-hover transition-all duration-300 border border-border/50;
   }
   
   .card-hover {
-    @apply transition-all duration-200 hover:shadow-hover;
+    @apply transition-all duration-300 hover:shadow-hover hover:scale-[1.02];
+  }
+  
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary to-accent-purple bg-clip-text text-transparent;
+  }
+  
+  .hero-gradient {
+    @apply bg-gradient-to-br from-background via-secondary/30 to-background;
   }
   
   .focus-ring {

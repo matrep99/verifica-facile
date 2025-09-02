@@ -19,6 +19,7 @@ export default {
 		},
 		extend: {
 			fontFamily: {
+				manrope: ['Manrope', 'system-ui', 'sans-serif'],
 				inter: ['Inter', 'system-ui', 'sans-serif'],
 			},
 			colors: {
@@ -31,6 +32,10 @@ export default {
 					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))',
 					hover: 'hsl(var(--primary-hover))'
+				},
+				'accent-purple': {
+					DEFAULT: 'hsl(var(--accent-purple))',
+					hover: 'hsl(var(--accent-purple-hover))'
 				},
 				success: {
 					DEFAULT: 'hsl(var(--success))',
@@ -69,12 +74,14 @@ export default {
 			},
 			backgroundImage: {
 				'gradient-primary': 'var(--gradient-primary)',
+				'gradient-secondary': 'var(--gradient-secondary)',
 				'gradient-card': 'var(--gradient-card)'
 			},
 			boxShadow: {
 				'card': 'var(--shadow-card)',
 				'hover': 'var(--shadow-hover)',
-				'focus': 'var(--shadow-focus)'
+				'focus': 'var(--shadow-focus)',
+				'glow': 'var(--shadow-glow)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
