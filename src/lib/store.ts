@@ -68,7 +68,7 @@ class VerificheStore {
   getUserTests(userId: string): Test[] {
     return Array.from(this.tests.values())
       .filter(test => test.ownerId === userId)
-      .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   }
 
   getTest(testId: string): Test | null {
@@ -167,7 +167,7 @@ class VerificheStore {
   getTestSubmissions(testId: string): Submission[] {
     return Array.from(this.submissions.values())
       .filter(s => s.testId === testId)
-      .sort((a, b) => b.startedAt.getTime() - a.startedAt.getTime());
+      .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime());
   }
 
   saveAnswer(submissionId: string, questionId: string, response: any): Answer {
