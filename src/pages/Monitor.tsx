@@ -188,7 +188,7 @@ export const Monitor = () => {
                             <span>•</span>
                             <span>{submissionStats.submitted}/{submissionStats.total} elaborati</span>
                             <span>•</span>
-                            <span>Aggiornata il {test.updatedAt.toLocaleDateString('it-IT')}</span>
+                            <span>Aggiornata il {new Date(test.updatedAt).toLocaleDateString('it-IT')}</span>
                           </div>
                         </div>
                         

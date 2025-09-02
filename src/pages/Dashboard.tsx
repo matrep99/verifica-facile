@@ -363,7 +363,7 @@ export const Dashboard = () => {
                           <span>{submissions.length} invii</span>
                         </div>
                         <div>
-                          Creata il {test.createdAt.toLocaleDateString('it-IT')}
+                          Creata il {new Date(test.createdAt).toLocaleDateString('it-IT')}
                         </div>
                       </div>
                     </CardContent>
