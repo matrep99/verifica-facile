@@ -1,21 +1,23 @@
 import { z } from 'zod';
 
-// Schema Zod per validazione strict delle domande generate dall'AI
 export const QuestionOutSchema = z.object({
-  type: z.enum(['MCQ', 'TF', 'SHORT', 'LONG']),
-  prompt: z.string().min(10, 'Il prompt deve essere di almeno 10 caratteri'),
-  options: z.array(z.string()).length(4).optional(),
+  type: z.enum(["MCQ","TF","SHORT","LONG"]),
+  prompt: z.string().min(8, 'Il prompt deve essere di almeno 8 caratteri'),
+  options: z.array(z.string().min(1)).length(4).optional(), // solo MCQ
   correctAnswer: z.union([
-    z.object({ selected: z.number().min(0).max(3) }), // MCQ
-    z.object({ value: z.boolean() }),                 // TF  
-    z.object({ expected: z.string().min(1) })         // SHORT/LONG
+    z.object({ selected: z.number().int().min(0).max(3) }),  // MCQ
+    z.object({ value: z.boolean() }),                        // TF
+    z.object({ expected: z.string().min(1) })                // SHORT/LONG
   ]).optional(),
-  points: z.number().int().min(1).max(10),
+  points: z.number().int().min(1).max(10).default(1),
   explainForTeacher: z.string().optional()
-});
+})
+.refine(q => q.type !== "MCQ" || (!!q.options && !!q.correctAnswer && "selected" in q.correctAnswer), "MCQ richiede 4 opzioni e indice corretto")
+.refine(q => q.type !== "TF"   || (!!q.correctAnswer && "value" in q.correctAnswer), "TF richiede booleano corretto")
+.refine(q => q.type !== "SHORT"|| (!!q.correctAnswer && "expected" in q.correctAnswer), "SHORT richiede expected");
 
 export const QuestionsOutSchema = z.object({
-  questions: z.array(QuestionOutSchema).min(1)
+  questions: z.array(QuestionOutSchema).min(1).max(10)
 });
 
 export type QuestionOut = z.infer<typeof QuestionOutSchema>;

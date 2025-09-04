@@ -1,89 +1,50 @@
-// Ontologia per allineamento strict delle domande AI
-
-export const keywordBank: Record<string, { base: string[], synonyms: Record<string, string[]> }> = {
-  matematica: {
-    base: [
-      'equazione', 'incognita', 'bilanciare', 'primo grado', 'secondo grado',
-      'frazione', 'denominatore', 'numeratore', 'semplificare', 'mcm', 'mcd',
-      'percentuale', 'proporzione', 'rapporto', 'geometria', 'teorema',
-      'triangolo', 'quadrilatero', 'cerchio', 'area', 'perimetro', 'volume',
-      'coordinate', 'piano cartesiano', 'funzione', 'grafico'
-    ],
-    synonyms: {
-      'equazione': ['x', 'risolvi', 'uguale', 'soluzione', 'incognita'],
-      'frazione': ['rapporto', 'divisione', 'numeratore', 'denominatore'],
-      'percentuale': ['per cento', '%', 'sconto', 'interesse'],
-      'geometria': ['forma', 'figura', 'misura', 'angolo', 'lato']
+export const keywordBank = {
+  "Matematica": {
+    base: ["equazione","incognita","primo grado","bilanciare","uguaglianza","frazione","denominatore","numeratore","percentuale","teorema"],
+    synonyms: { 
+      "equazione": ["x","risolvi","=","uguale","soluzione"],
+      "incognita": ["variabile","x","y"],
+      "frazione": ["rapporto","divisione","numeratore","denominatore"],
+      "percentuale": ["per cento","%","sconto","interesse"]
     }
   },
-  
-  storia: {
-    base: [
-      'roma antica', 'repubblica', 'impero', 'cesare', 'augusto',
-      'medioevo', 'feudalesimo', 'carlo magno', 'crociate',
-      'rinascimento', 'umanesimo', 'leonardo', 'michelangelo',
-      'scoperte geografiche', 'colombo', 'america',
-      'rivoluzione francese', 'napoleone', 'risorgimento',
-      'unità italia', 'garibaldi', 'cavour'
-    ],
-    synonyms: {
-      'roma antica': ['romano', 'latino', 'colosseo', 'foro', 'senato'],
-      'medioevo': ['medievale', 'cavaliere', 'castello', 'monastero'],
-      'rinascimento': ['umanista', 'arte', 'cultura', 'firenze'],
-      'risorgimento': ['unificazione', 'patriota', 'indipendenza']
+  "Storia": {
+    base: ["roma antica","repubblica","impero","cesare","senato","augusto","medioevo","feudalesimo","rinascimento","napoleone"],
+    synonyms: { 
+      "repubblica": ["console","patrizi","plebei","senato"],
+      "impero": ["imperatore","augusto","cesare"],
+      "medioevo": ["medievale","cavaliere","castello","feudale"],
+      "rinascimento": ["umanista","arte","cultura","firenze"]
     }
   },
-  
-  scienze: {
-    base: [
-      'fotosintesi', 'clorofilla', 'stomi', 'anidride carbonica', 'ossigeno',
-      'cellula', 'membrana', 'nucleo', 'citoplasma', 'mitocondri',
-      'digestione', 'respirazione', 'circolazione', 'sistema nervoso',
-      'atomo', 'elettrone', 'protone', 'neutrone', 'elemento',
-      'composto', 'reazione chimica', 'acido', 'base', 'ph',
-      'forza', 'energia', 'movimento', 'velocità', 'accelerazione'
-    ],
-    synonyms: {
-      'fotosintesi': ['pianta', 'sole', 'luce', 'glucosio', 'energia'],
-      'cellula': ['organismo', 'vita', 'tessuto', 'organo'],
-      'atomo': ['particella', 'materia', 'molecola'],
-      'energia': ['lavoro', 'potenza', 'calore', 'elettricità']
+  "Scienze": {
+    base: ["fotosintesi","clorofilla","stomi","anidride carbonica","ossigeno","cellula","nucleo","digestione","respirazione","atomo"],
+    synonyms: { 
+      "fotosintesi": ["luce solare","CO2","H2O","glucosio","pianta"],
+      "cellula": ["membrana","citoplasma","nucleo","organismo"],
+      "digestione": ["stomaco","intestino","enzimi","nutrienti"],
+      "atomo": ["protone","elettrone","neutrone","elemento"]
     }
   },
-  
-  italiano: {
-    base: [
-      'analisi del periodo', 'proposizione', 'coordinata', 'subordinata',
-      'soggetto', 'predicato', 'complemento', 'attributo', 'apposizione',
-      'nome', 'aggettivo', 'verbo', 'avverbio', 'preposizione',
-      'metafora', 'similitudine', 'personificazione', 'allitterazione',
-      'dante', 'divina commedia', 'inferno', 'purgatorio', 'paradiso',
-      'manzoni', 'promessi sposi', 'leopardi', 'petrarca', 'boccaccio'
-    ],
-    synonyms: {
-      'analisi del periodo': ['sintassi', 'frase', 'periodo', 'proposizione'],
-      'metafora': ['figura retorica', 'immagine', 'significato'],
-      'dante': ['alighieri', 'poeta', 'firenze', 'beatrice'],
-      'manzoni': ['alessandro', 'romanzo', 'renzo', 'lucia']
+  "Italiano": {
+    base: ["analisi del periodo","proposizione","coordinata","subordinata","congiunzione","soggetto","predicato","complemento"],
+    synonyms: { 
+      "subordinata": ["relative","temporali","causali","consecutive"],
+      "proposizione": ["frase","periodo","principale"],
+      "analisi del periodo": ["sintassi","grammatica","periodo"],
+      "complemento": ["oggetto","termine","specificazione"]
     }
   },
-  
-  inglese: {
-    base: [
-      'simple past', 'irregular verbs', 'did', 'was', 'were',
-      'present perfect', 'have', 'has', 'past participle',
-      'future', 'will', 'going to', 'modal verbs', 'can', 'could',
-      'conditional', 'would', 'should', 'passive voice',
-      'article', 'preposition', 'adjective', 'adverb'
-    ],
-    synonyms: {
-      'simple past': ['passato', 'yesterday', 'ago', 'last'],
-      'present perfect': ['esperienza', 'already', 'just', 'never'],
-      'future': ['domani', 'tomorrow', 'next', 'plans'],
-      'modal verbs': ['abilità', 'possibilità', 'permission']
+  "Inglese": {
+    base: ["simple past","irregular verbs","did","was","were","present perfect","future","modal verbs"],
+    synonyms: { 
+      "simple past": ["yesterday","ago","didn't","past"],
+      "present perfect": ["have","has","already","just","never"],
+      "future": ["will","going to","tomorrow","plans"],
+      "modal verbs": ["can","could","should","would"]
     }
   }
-};
+} as const;
 
 export type ClassBand = 'primaria' | 'media' | 'superiore';
 
@@ -94,27 +55,16 @@ export interface ClassInfo {
   lexicon: 'base' | 'medio' | 'avanzato';
 }
 
-export const classMap = (classLabel: string): ClassInfo => {
-  const normalized = classLabel.toLowerCase();
-  
-  // Primaria (6-11 anni)
-  if (normalized.includes('1') || normalized.includes('2') || normalized.includes('3') ||
-      normalized.includes('4') || normalized.includes('5') || 
-      normalized.includes('prima') || normalized.includes('seconda') || 
-      normalized.includes('terza') || normalized.includes('quarta') || 
-      normalized.includes('quinta') || normalized.includes('elementare')) {
-    return { band: 'primaria', minAge: 6, maxAge: 11, lexicon: 'base' };
+export function classMap(classLabel: string): ClassInfo {
+  const s = classLabel.toLowerCase();
+  if (s.includes("prim") || s.includes("elementare") || /1[aª]|2[aª]|3[aª]|4[aª]|5[aª]/.test(s)) {
+    return { band: "primaria", lexicon: "base", minAge: 6, maxAge: 10 };
   }
-  
-  // Media (11-14 anni)
-  if (normalized.includes('1ª') || normalized.includes('2ª') || normalized.includes('3ª') ||
-      normalized.includes('media') || normalized.includes('medie')) {
-    return { band: 'media', minAge: 11, maxAge: 14, lexicon: 'medio' };
+  if (s.includes("media") || s.includes("medie") || /1[aª]\s*media|2[aª]\s*media|3[aª]\s*media/.test(s)) {
+    return { band: "media", lexicon: "medio", minAge: 11, maxAge: 14 };
   }
-  
-  // Superiore (14-19 anni)
-  return { band: 'superiore', minAge: 14, maxAge: 19, lexicon: 'avanzato' };
-};
+  return { band: "superiore", lexicon: "avanzato", minAge: 14, maxAge: 19 };
+}
 
 // Stopwords italiane comuni
 export const stopWords = new Set([

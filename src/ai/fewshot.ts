@@ -1,7 +1,7 @@
 // Few-shot examples per disciplina e classe (JSON valido conforme allo schema)
 
 export const fewShotExamples = {
-  matematica: {
+  "Matematica": {
     media: [
       {
         type: "MCQ",
@@ -28,7 +28,7 @@ export const fewShotExamples = {
     ]
   },
   
-  storia: {
+  "Storia": {
     media: [
       {
         type: "MCQ",
@@ -55,7 +55,7 @@ export const fewShotExamples = {
     ]
   },
   
-  scienze: {
+  "Scienze": {
     primaria: [
       {
         type: "MCQ",
@@ -82,7 +82,7 @@ export const fewShotExamples = {
     ]
   },
   
-  italiano: {
+  "Italiano": {
     superiore: [
       {
         type: "MCQ",
@@ -109,7 +109,7 @@ export const fewShotExamples = {
     ]
   },
   
-  inglese: {
+  "Inglese": {
     media: [
       {
         type: "MCQ", 
@@ -141,8 +141,7 @@ export const fewShotExamples = {
  * Ottieni esempi few-shot pertinenti per disciplina e classe
  */
 export const getFewShotExamples = (subject: string, classLabel: string): any[] => {
-  const normalizedSubject = subject.toLowerCase();
-  const examples = fewShotExamples[normalizedSubject as keyof typeof fewShotExamples];
+  const examples = fewShotExamples[subject as keyof typeof fewShotExamples];
   
   if (!examples) {
     console.warn(`No few-shot examples for subject: ${subject}`);
