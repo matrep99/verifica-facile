@@ -3,12 +3,12 @@ import { OpenAIProvider } from './providers/OpenAIProvider';
 import { MockAiProvider } from './providers/MockAiProvider';
 import { 
   extractKeywords, 
-  classMap, 
   validateItem, 
   scoreItem, 
   enforceMix,
   type AlignmentContext 
 } from './align';
+import { classMap } from './ontology';
 import { QuestionOut, type Diagnostics, type Diagnostic } from './schema';
 
 const MAX_TRIES = 3;

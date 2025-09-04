@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, CheckCircle2, Wand2 } from 'lucide-react';
-import { generateAligned, type GenerateAlignedParams, type GenerateAlignedResult } from '@/ai/generateAligned';
+import { generateAligned, type GenerateAlignedParams, type GenerateAlignedResult } from '../ai/generateAligned';
 import { Test } from '@/types';
 
 interface AlignedGenerationModalProps {

@@ -1,4 +1,4 @@
-import { keywordBank, stopWords, type ClassBand, type ClassInfo } from './ontology';
+import { keywordBank, stopWords, classMap, type ClassBand, type ClassInfo } from './ontology';
 import { QuestionOut } from './schema';
 
 export interface AlignmentContext {
@@ -26,7 +26,7 @@ export const extractKeywords = (subject: string, topic: string, description?: st
   subjectKeywords.base.forEach(kw => keywords.add(kw));
   
   const topicLower = topic.toLowerCase();
-  Object.entries(subjectKeywords.synonyms).forEach(([key, synonyms]) => {
+  Object.entries(subjectKeywords.synonyms).forEach(([key, synonyms]: [string, string[]]) => {
     if (topicLower.includes(key) || synonyms.some(syn => topicLower.includes(syn))) {
       keywords.add(key);
       synonyms.forEach(syn => keywords.add(syn));
@@ -43,19 +43,6 @@ export const extractKeywords = (subject: string, topic: string, description?: st
   return Array.from(keywords);
 };
 
-export const classMap = (classLabel: string): ClassInfo => {
-  const normalized = classLabel.toLowerCase();
-  
-  if (normalized.includes('primaria') || normalized.includes('elementare')) {
-    return { band: 'primaria', minAge: 6, maxAge: 11, lexicon: 'base' };
-  }
-  
-  if (normalized.includes('media') || normalized.includes('medie')) {
-    return { band: 'media', minAge: 11, maxAge: 14, lexicon: 'medio' };
-  }
-  
-  return { band: 'superiore', minAge: 14, maxAge: 19, lexicon: 'avanzato' };
-};
 
 export const coverageScore = (text: string, keywords: string[]): number => {
   if (keywords.length === 0) return 0;

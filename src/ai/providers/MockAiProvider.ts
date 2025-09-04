@@ -1,7 +1,7 @@
 import { AiProvider, GenerateParams, GradeParams, GradeResponse } from './AiProvider';
 import { QuestionsOut, QuestionOut } from '../schema';
-import { postProcess, validateItem, type AlignmentContext } from '../align';
-import { classMap, extractKeywords } from '../ontology';
+import { postProcess, validateItem, extractKeywords, type AlignmentContext } from '../align';
+import { classMap } from '../ontology';
 
 export class MockAiProvider extends AiProvider {
   private templates = {
@@ -270,7 +270,7 @@ export class MockAiProvider extends AiProvider {
         prompt: `Domanda su ${params.topic} per ${params.classLabel}`,
         options: ['Opzione A', 'Opzione B', 'Opzione C', 'Opzione D'],
         correctAnswer: { selected: 0 },
-        points: this.getPointsForDifficulty(params.difficult)
+        points: this.getPointsForDifficulty(params.difficulty)
       };
       questions.push(postProcess(fallback));
     }
@@ -322,14 +322,28 @@ export class MockAiProvider extends AiProvider {
       return { mcq: [], tf: [], short: [] };
     }
     
-    const levelTemplates = subjectTemplates[band as keyof typeof subjectTemplates] || 
-                          subjectTemplates.media || 
-                          Object.values(subjectTemplates)[0];
+    // Try to get templates for the specific band
+    let levelTemplates;
+    if (band === 'primaria' && 'primaria' in subjectTemplates) {
+      levelTemplates = subjectTemplates.primaria;
+    } else if (band === 'media' && 'media' in subjectTemplates) {
+      levelTemplates = subjectTemplates.media;
+    } else if (band === 'superiore' && 'superiore' in subjectTemplates) {
+      levelTemplates = (subjectTemplates as any).superiore;
+    } else if ('media' in subjectTemplates) {
+      levelTemplates = subjectTemplates.media;
+    } else {
+      levelTemplates = Object.values(subjectTemplates)[0];
+    }
+    
+    if (!levelTemplates || typeof levelTemplates !== 'object') {
+      return { mcq: [], tf: [], short: [] };
+    }
     
     return {
-      mcq: levelTemplates?.mcq || [],
-      tf: levelTemplates?.tf || [],
-      short: levelTemplates?.short || []
+      mcq: (levelTemplates as any).mcq || [],
+      tf: (levelTemplates as any).tf || [],
+      short: (levelTemplates as any).short || []
     };
   }
   
