@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  role      String   @default("STUDENT")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  tests     Test[]
+  submissions Submission[]
+}
+
+model Test {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  subject     String   // Disciplina
+  topic       String   // Argomento
+  classLabel  String   // Classe
+  status      String   @default("DRAFT")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  startedAt   DateTime?
+  duration    Int      @default(60)
+  
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id])
+  
+  questions   Question[]
+  submissions Submission[]
+}
+
+model Question {
+  id            String   @id @default(cuid())
+  testId        String
+  questionIndex Int
+  type          String   // MCQ, TF, SHORT, LONG
+  prompt        String
+  options       String?  // JSON array for MCQ
+  correctAnswer String?  // JSON object
+  points        Int      @default(1)
+  explainForTeacher String?
+  createdAt     DateTime @default(now())
+  
+  test          Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
+  answers       Answer[]
+  
+  @@unique([testId, questionIndex])
+}
+
+model Submission {
+  id        String   @id @default(cuid())
+  testId    String
+  userId    String
+  status    String   @default("IN_PROGRESS")
+  startedAt DateTime @default(now())
+  submittedAt DateTime?
+  score     Float?
+  
+  test      Test     @relation(fields: [testId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+  answers   Answer[]
+  
+  @@unique([testId, userId])
+}
+
+model Answer {
+  id           String   @id @default(cuid())
+  submissionId String
+  questionId   String
+  answer       String?  // JSON format
+  score        Float?
+  feedback     String?
+  createdAt    DateTime @default(now())
+  
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  question     Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  @@unique([submissionId, questionId])
+}

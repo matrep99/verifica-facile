@@ -1,67 +1,115 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { VerificheButton } from '@/components/ui/button-variants';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, CheckCircle2, Wand2 } from 'lucide-react';
-import { generateAligned, type GenerateAlignedParams, type GenerateAlignedResult } from '../ai/generateAligned';
-import { Test } from '@/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
+
+interface QuestionOut {
+  type: "MCQ" | "TF" | "SHORT" | "LONG";
+  prompt: string;
+  options?: string[];
+  correctAnswer?: { selected: number } | { value: boolean } | { expected: string };
+  points: number;
+  explainForTeacher?: string;
+}
 
 interface AlignedGenerationModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  test: Test;
-  onAcceptQuestions: (questions: any[]) => void;
+  initialData?: {
+    subject: string;
+    topic: string;
+    classLabel: string;
+    description?: string;
+  };
+  onAccept: (questions: QuestionOut[]) => void;
 }
 
-export const AlignedGenerationModal: React.FC<AlignedGenerationModalProps> = ({
-  open,
-  onOpenChange,
-  test,
-  onAcceptQuestions
-}) => {
-  const [params, setParams] = useState<GenerateAlignedParams>({
-    subject: test.subject,
-    topic: test.topic,
-    classLabel: test.classLabel,
-    description: test.description,
-    difficulty: 'medium',
-    count: 5,
-    mix: true,
-    strict: true
-  });
-  
+export default function AlignedGenerationModal({ open, onOpenChange, initialData, onAccept }: AlignedGenerationModalProps) {
+  const [subject, setSubject] = useState(initialData?.subject || '');
+  const [topic, setTopic] = useState(initialData?.topic || '');
+  const [classLabel, setClassLabel] = useState(initialData?.classLabel || '');
+  const [description, setDescription] = useState(initialData?.description || '');
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+  const [count, setCount] = useState(5);
+  const [strict, setStrict] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [result, setResult] = useState<GenerateAlignedResult | null>(null);
+  const [questions, setQuestions] = useState<QuestionOut[]>([]);
+  const [diagnostics, setDiagnostics] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleGenerate = async () => {
+    if (!subject || !topic || !classLabel) {
+      toast.error('Disciplina, Argomento e Classe sono obbligatori');
+      return;
+    }
+
     setIsGenerating(true);
     setError(null);
     
     try {
-      const generatedResult = await generateAligned(params);
-      setResult(generatedResult);
-    } catch (err: any) {
-      setError(err.message || 'Errore durante la generazione');
+      const response = await fetch('/api/ai/generate-questions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          subject,
+          topic,
+          classLabel,
+          description,
+          difficulty,
+          count,
+          mix: true,
+          strict
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 422 && data.error?.code === 'MISALIGNED') {
+          setError(`Generazione non allineata: ${data.error.message}`);
+          setDiagnostics(data.error.details);
+          toast.error('Domande non sufficientemente allineate. Prova ad arricchire la descrizione con parole chiave specifiche.');
+        } else {
+          setError(data.error?.message || 'Errore durante la generazione');
+          toast.error(data.error?.message || 'Errore durante la generazione');
+        }
+        return;
+      }
+
+      setQuestions(data.questions || []);
+      setDiagnostics(data.diagnostics);
+      toast.success(`Generati ${data.questions?.length || 0} domande`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Errore di connessione';
+      setError(errorMessage);
+      toast.error('Errore durante la generazione: ' + errorMessage);
     } finally {
       setIsGenerating(false);
     }
   };
 
   const handleAccept = () => {
-    if (result) {
-      onAcceptQuestions(result.questions);
-      onOpenChange(false);
-      setResult(null);
-    }
+    if (questions.length === 0) return;
+    onAccept(questions);
+    onOpenChange(false);
+    toast.success(`Aggiunte ${questions.length} domande al test`);
   };
 
-  const canAccept = result && (!params.strict || result.diagnostics.passRate >= 0.7);
+  const getCoverageColor = (coverage: number) => {
+    if (coverage >= 0.8) return 'bg-green-500';
+    if (coverage >= 0.6) return 'bg-yellow-500';
+    return 'bg-red-500';
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -75,19 +123,31 @@ export const AlignedGenerationModal: React.FC<AlignedGenerationModalProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Disciplina</Label>
-              <Input value={params.subject} disabled className="bg-muted" />
+              <Input 
+                value={subject} 
+                onChange={(e) => setSubject(e.target.value)}
+                placeholder="es. Matematica, Storia, Scienze..."
+              />
             </div>
             <div>
               <Label>Argomento</Label>
-              <Input value={params.topic} disabled className="bg-muted" />
+              <Input 
+                value={topic} 
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="es. Equazioni di primo grado..."
+              />
             </div>
             <div>
               <Label>Classe</Label>
-              <Input value={params.classLabel} disabled className="bg-muted" />
+              <Input 
+                value={classLabel} 
+                onChange={(e) => setClassLabel(e.target.value)}
+                placeholder="es. 2ª media, 1ª superiore..."
+              />
             </div>
             <div>
               <Label>Difficoltà</Label>
-              <Select value={params.difficulty} onValueChange={(value: any) => setParams({...params, difficulty: value})}>
+              <Select value={difficulty} onValueChange={(value: any) => setDifficulty(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -98,113 +158,131 @@ export const AlignedGenerationModal: React.FC<AlignedGenerationModalProps> = ({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div>
+            <Label>Descrizione (3-6 parole chiave consigliate)</Label>
+            <Textarea 
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="es. numeri piccoli, bilanciamento su entrambi i membri, niente frazioni complesse..."
+              rows={3}
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <Label># Domande</Label>
               <Input 
                 type="number" 
                 min="3" 
                 max="10" 
-                value={params.count} 
-                onChange={(e) => setParams({...params, count: parseInt(e.target.value) || 5})} 
+                value={count} 
+                onChange={(e) => setCount(parseInt(e.target.value) || 5)} 
               />
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 pt-6">
               <Switch 
-                checked={params.strict} 
-                onCheckedChange={(checked) => setParams({...params, strict: checked})}
+                checked={strict} 
+                onCheckedChange={setStrict}
               />
               <Label>Strict Mode (consigliato)</Label>
             </div>
           </div>
 
           {/* Pulsante Generate */}
-          <VerificheButton 
+          <Button 
             onClick={handleGenerate} 
-            disabled={isGenerating}
+            disabled={isGenerating || !subject || !topic || !classLabel}
             className="w-full"
           >
-            <Wand2 className="mr-2 h-4 w-4" />
-            {isGenerating ? 'Generazione in corso...' : 'Genera'}
-          </VerificheButton>
+            {isGenerating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generazione in corso...
+              </>
+            ) : (
+              'Genera'
+            )}
+          </Button>
 
           {/* Errore */}
           {error && (
-            <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center space-x-2">
-              <AlertCircle className="h-5 w-5 text-destructive" />
-              <span className="text-destructive">{error}</span>
-            </div>
+            <Card className="border-destructive">
+              <CardContent className="pt-6">
+                <div className="flex items-center space-x-2 text-destructive">
+                  <XCircle className="h-5 w-5" />
+                  <span>{error}</span>
+                </div>
+                {diagnostics && (
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    Domande accettate: {diagnostics.accepted}/{diagnostics.requested}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
 
-          {/* Risultats */}
-          {result && (
-            <Tabs defaultValue="overview" className="w-full">
-              <TabsList>
-                <TabsTrigger value="overview">Panoramica</TabsTrigger>
-                <TabsTrigger value="questions">Domande</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="overview" className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Badge variant="outline">
-                      Copertura argomento: {Math.round(result.diagnostics.avgCoverage * 100)}%
+          {/* Risultati */}
+          {questions.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Anteprima Domande</span>
+                  <div className="flex items-center space-x-2">
+                    {diagnostics && (
+                      <Badge variant="outline">
+                        Copertura: {Math.round((diagnostics.accepted / diagnostics.requested) * 100)}%
+                      </Badge>
+                    )}
+                    <Badge variant={questions.length >= count * 0.7 ? "default" : "destructive"}>
+                      {questions.length} domande
                     </Badge>
                   </div>
-                  <div>
-                    <Badge variant={result.diagnostics.passRate >= 0.7 ? "default" : "destructive"}>
-                      Domande valide: {Math.round(result.diagnostics.passRate * 100)}%
-                    </Badge>
-                  </div>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="questions" className="space-y-3">
-                {result.questions.map((question, index) => {
-                  const diagnostic = result.diagnostics.questions[index];
-                  return (
-                    <div key={index} className="p-3 border rounded-lg">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <Badge variant="outline">{question.type}</Badge>
-                            {diagnostic.passed ? (
-                              <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            ) : (
-                              <AlertCircle className="h-4 w-4 text-red-500" />
-                            )}
-                          </div>
-                          <p className="text-sm mb-2">{question.prompt}</p>
-                          {diagnostic.reasons.length > 0 && (
-                            <p className="text-xs text-muted-foreground">
-                              Motivi: {diagnostic.reasons.join(', ')}
-                            </p>
-                          )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {questions.map((question, index) => (
+                  <div key={index} className="p-3 border rounded-lg">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <Badge variant="outline">{question.type}</Badge>
+                          <Badge variant="outline">{question.points} pt</Badge>
+                          <CheckCircle className="h-4 w-4 text-green-500" />
                         </div>
+                        <p className="text-sm mb-2">{question.prompt}</p>
+                        {question.type === 'MCQ' && question.options && (
+                          <div className="text-xs text-muted-foreground">
+                            Opzioni: {question.options.length}
+                          </div>
+                        )}
                       </div>
                     </div>
-                  );
-                })}
-              </TabsContent>
-            </Tabs>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
           )}
 
           {/* Azioni finali */}
-          {result && (
+          {questions.length > 0 && (
             <div className="flex justify-end space-x-2">
-              <VerificheButton variant="outline" onClick={() => setResult(null)}>
+              <Button variant="outline" onClick={() => { setQuestions([]); setError(null); }}>
+                <RefreshCw className="mr-2 h-4 w-4" />
                 Rigenera
-              </VerificheButton>
-              <VerificheButton 
+              </Button>
+              <Button 
                 onClick={handleAccept}
-                disabled={!canAccept}
-                variant={canAccept ? "success" : "outline"}
+                disabled={strict && questions.length < count * 0.7}
+                variant={(!strict || questions.length >= count * 0.7) ? "default" : "secondary"}
               >
-                Accetta {result.questions.length} domande
-              </VerificheButton>
+                Accetta {questions.length} domande
+              </Button>
             </div>
           )}
         </div>
       </DialogContent>
     </Dialog>
   );
-};
+}

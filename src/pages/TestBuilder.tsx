@@ -11,9 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { store } from '@/lib/store';
-import { mockAi } from '@/lib/ai-mock';
 import { Test, Question, QuestionType } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import AlignedGenerationModal from '@/components/AlignedGenerationModal';
 
 export const TestBuilder = () => {
   const { testId } = useParams<{ testId: string }>();
@@ -23,7 +23,7 @@ export const TestBuilder = () => {
   const [test, setTest] = useState<Test | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [selectedQuestionIndex, setSelectedQuestionIndex] = useState(0);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -103,19 +103,54 @@ export const TestBuilder = () => {
 
   const generateQuestions = async () => {
     if (!test) return;
-    
-    setIsGenerating(true);
+    setShowAiModal(true);
+  };
+
+  const handleAcceptQuestions = async (generatedQuestions: any[]) => {
+    if (!test || !testId) return;
+
     try {
-      const generatedQuestions = await mockAi.generateQuestions({
-        topic: test.title,
-        gradeLevel: 'scuola-media',
-        difficulty: 'medium',
-        count: 5
+      // Try to use API first
+      const response = await fetch(`/api/tests/${testId}/questions/bulk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questions: generatedQuestions })
       });
+
+      if (response.ok) {
+        // Reload questions from server
+        const questionsResponse = await fetch(`/api/tests/${testId}/questions`);
+        if (questionsResponse.ok) {
+          const { questions: serverQuestions } = await questionsResponse.json();
+          const convertedQuestions = serverQuestions.map((q: any) => ({
+            ...q,
+            options: q.options ? JSON.parse(q.options) : undefined,
+            correctAnswer: q.correctAnswer ? JSON.parse(q.correctAnswer) : undefined
+          }));
+          setQuestions(convertedQuestions);
+        }
+        
+        toast({
+          title: "Domande aggiunte!",
+          description: `Aggiunte ${generatedQuestions.length} nuove domande alla verifica.`,
+          variant: "default"
+        });
+      } else {
+        throw new Error('API call failed');
+      }
+    } catch (error) {
+      // Fallback to local storage
+      console.log('API failed, using local storage fallback');
       
-      // Aggiungi le domande generate
       generatedQuestions.forEach(q => {
-        store.addQuestion(test.id, q);
+        const convertedQuestion = {
+          type: q.type,
+          prompt: q.prompt,
+          options: q.options || [],
+          correctAnswer: q.correctAnswer,
+          points: q.points || 1
+        };
+        store.addQuestion(test.id, convertedQuestion);
       });
       
       const updatedQuestions = store.getQuestions(test.id);
@@ -126,14 +161,6 @@ export const TestBuilder = () => {
         description: `Aggiunte ${generatedQuestions.length} nuove domande alla verifica.`,
         variant: "default"
       });
-    } catch (error) {
-      toast({
-        title: "Errore generazione",
-        description: "Non è stato possibile generare le domande. Riprova.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsGenerating(false);
     }
   };
 
@@ -197,10 +224,9 @@ export const TestBuilder = () => {
             <VerificheButton
               variant="outline"
               onClick={generateQuestions}
-              disabled={isGenerating}
             >
               <Wand2 className="mr-2 h-4 w-4" />
-              {isGenerating ? 'Generazione...' : 'Genera con AI'}
+              Genera con AI (allineata)
             </VerificheButton>
             
             {test.status === 'DRAFT' && (
@@ -436,6 +462,19 @@ export const TestBuilder = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* AI Generation Modal */}
+        <AlignedGenerationModal
+          open={showAiModal}
+          onOpenChange={setShowAiModal}
+          initialData={{
+            subject: test?.subject || '',
+            topic: test?.topic || '',
+            classLabel: test?.classLabel || '',
+            description: test?.description || ''
+          }}
+          onAccept={handleAcceptQuestions}
+        />
       </div>
     </Layout>
   );
