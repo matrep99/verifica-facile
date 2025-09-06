@@ -1,5 +1,5 @@
 import { QuestionsOut, TQuestionOut } from "./schema";
-import { keywords, validateItem } from "./align";
+import { keywords, validateItem, coverage } from "./align";
 import { classBand } from "./ontology";
 import { OpenAIProvider } from "./providers/OpenAIProvider";
 import { MockAiProvider } from "./providers/MockAiProvider";
@@ -46,10 +46,31 @@ export async function generateAligned(params: {
     }
   }
 
-  // soglie Strict Mode
-  if (strict && accepted.length < Math.ceil(0.7 * count)) {
-    return { ok:false, code:"MISALIGNED", message:"Output non allineato a disciplina/argomento/classe.", diagnostics:{ accepted:accepted.length, requested:count } };
+  // Calcola coverage medio
+  const avgCoverage = accepted.length ? 
+    accepted.map(q => coverage(q.prompt, kws)).reduce((a,b) => a+b, 0) / accepted.length : 0;
+
+  // Soglie Strict Mode più rigorose
+  if (strict && (accepted.length < Math.ceil(0.7 * count) || avgCoverage < 0.65)) {
+    return { 
+      ok: false, 
+      code: "MISALIGNED", 
+      message: "Domande non sufficientemente allineate", 
+      diagnostics: { 
+        accepted: accepted.length, 
+        requested: count, 
+        avgCoverage 
+      } 
+    };
   }
   
-  return { ok:true, questions: accepted, diagnostics:{ accepted:accepted.length, requested:count } };
+  return { 
+    ok: true, 
+    questions: accepted, 
+    diagnostics: { 
+      accepted: accepted.length, 
+      requested: count, 
+      avgCoverage 
+    } 
+  };
 }

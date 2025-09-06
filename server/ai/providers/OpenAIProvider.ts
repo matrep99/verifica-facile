@@ -50,7 +50,7 @@ export class OpenAIProvider {
             temperature: 0.0,
             top_p: 0.9,
             frequency_penalty: 0.2,
-            presence_penalty: 0
+            response_format: { type: "json_object" }
           })
         });
 

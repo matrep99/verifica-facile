@@ -17,7 +17,6 @@ export function coverage(text: string, kws: string[])
   return hit.length / Math.max(1, Math.min(kws.length, 12));
 }
 
-// bag-of-words cosine similarity between prompt and topic+desc+subject
 export function cosine(a: string, b: string)
 {
   const tf = (s: string) =>
@@ -38,37 +37,26 @@ export function cosine(a: string, b: string)
   return dot === 0 ? 0 : dot / (Math.sqrt(nA) * Math.sqrt(nB));
 }
 
-export function noSpoiler(item: TQuestionOut)
+export function noSpoiler(q: TQuestionOut)
 {
-  if (item.type === "MCQ" && item.options && item.correctAnswer && "selected" in item.correctAnswer)
-  {
-    const idx = item.correctAnswer.selected;
-    const corr = item.options[idx]?.toLowerCase();
-    return !corr || !item.prompt.toLowerCase().includes(corr);
+  if(q.type==="MCQ" && q.options && q.correctAnswer && "selected" in q.correctAnswer){
+    const idx=q.correctAnswer.selected;
+    const corr=q.options[idx]?.toLowerCase();
+    return !corr || !q.prompt.toLowerCase().includes(corr);
   }
-  if (item.type === "SHORT" && item.correctAnswer && "expected" in item.correctAnswer)
-  {
-    return !item.prompt.toLowerCase().includes(item.correctAnswer.expected.toLowerCase());
+  if(q.type==="SHORT" && q.correctAnswer && "expected" in q.correctAnswer){
+    return !q.prompt.toLowerCase().includes(q.correctAnswer.expected.toLowerCase());
   }
   return true;
 }
 
-export function validateItem(item: TQuestionOut, ctx: { kws:string[]; band:{band:string;maxLen:number}; ref:string })
+export function validateItem(q:TQuestionOut, ctx:{kws:string[]; band:{band:string;maxLen:number}; ref:string})
 {
-  const z = QuestionOut.safeParse(item);
-  if (!z.success) return { ok:false, reasons:["schema"] };
-
-  const cov = coverage(item.prompt, ctx.kws);
-  if (cov < 0.65) return { ok:false, reasons:[`coverage:${(cov*100)|0}%`] };
-
-  const sim = cosine(item.prompt, ctx.ref);
-  if (sim < 0.6) return { ok:false, reasons:[`similarity:${(sim*100)|0}%`] };
-
-  const words = item.prompt.split(/\s+/).length;
-  if (words > ctx.band.maxLen) return { ok:false, reasons:["readability"] };
-
-  if (!noSpoiler(item)) return { ok:false, reasons:["spoiler"] };
-  if (item.type === "MCQ" && item.options && new Set(item.options).size < 4) return { ok:false, reasons:["options-duplicates"] };
-
-  return { ok:true, reasons:[] };
+  const z=QuestionOut.safeParse(q); if(!z.success) return {ok:false,reasons:["schema"]};
+  const cov=coverage(q.prompt,ctx.kws); if(cov<0.65) return {ok:false,reasons:[`coverage:${(cov*100)|0}%`]};
+  const sim=cosine(q.prompt,ctx.ref); if(sim<0.60)   return {ok:false,reasons:[`similarity:${(sim*100)|0}%`]};
+  const len=q.prompt.split(/\s+/).length; if(len>ctx.band.maxLen) return {ok:false,reasons:["readability"]};
+  if(!noSpoiler(q)) return {ok:false,reasons:["spoiler"]};
+  if(q.type==="MCQ" && q.options && new Set(q.options).size<4) return {ok:false,reasons:["options-duplicates"]};
+  return {ok:true,reasons:[]};
 }

@@ -55,6 +55,9 @@ export default function AlignedGenerationModal({ open, onOpenChange, initialData
     setError(null);
     
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+      
       const response = await fetch('/api/ai/generate-questions', {
         method: 'POST',
         headers: {
@@ -70,8 +73,10 @@ export default function AlignedGenerationModal({ open, onOpenChange, initialData
           mix: true,
           strict
         }),
+        signal: controller.signal
       });
 
+      clearTimeout(timeoutId);
       const data = await response.json();
 
       if (!response.ok) {
@@ -88,9 +93,11 @@ export default function AlignedGenerationModal({ open, onOpenChange, initialData
 
       setQuestions(data.questions || []);
       setDiagnostics(data.diagnostics);
-      toast.success(`Generati ${data.questions?.length || 0} domande`);
+      toast.success(`Generati ${data.questions?.length || 0} domande (copertura media: ${Math.round((data.diagnostics?.avgCoverage || 0) * 100)}%)`);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Errore di connessione';
+      const errorMessage = error instanceof Error ? 
+        (error.name === 'AbortError' ? 'Timeout: generazione troppo lenta' : error.message) : 
+        'Errore di connessione';
       setError(errorMessage);
       toast.error('Errore durante la generazione: ' + errorMessage);
     } finally {
@@ -231,9 +238,14 @@ export default function AlignedGenerationModal({ open, onOpenChange, initialData
                   <span>Anteprima Domande</span>
                   <div className="flex items-center space-x-2">
                     {diagnostics && (
-                      <Badge variant="outline">
-                        Copertura: {Math.round((diagnostics.accepted / diagnostics.requested) * 100)}%
-                      </Badge>
+                      <>
+                        <Badge variant="outline">
+                          Copertura media: {Math.round((diagnostics.avgCoverage || 0) * 100)}%
+                        </Badge>
+                        <Badge variant="outline">
+                          Accettate: {diagnostics.accepted}/{diagnostics.requested}
+                        </Badge>
+                      </>
                     )}
                     <Badge variant={questions.length >= count * 0.7 ? "default" : "destructive"}>
                       {questions.length} domande
@@ -268,9 +280,16 @@ export default function AlignedGenerationModal({ open, onOpenChange, initialData
           {/* Azioni finali */}
           {questions.length > 0 && (
             <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => { setQuestions([]); setError(null); }}>
+              <Button variant="outline" onClick={() => { 
+                setQuestions([]); 
+                setError(null); 
+                // Arricchisci automaticamente la descrizione per rigenerazioni
+                if (error && !description.includes('fotosintesi') && !description.includes('equazioni')) {
+                  setDescription(prev => prev + (prev ? ', ' : '') + 'parole chiave specifiche per ' + topic.toLowerCase());
+                }
+              }}>
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Rigenera
+                Rigenera (arricchita)
               </Button>
               <Button 
                 onClick={handleAccept}
